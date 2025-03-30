@@ -1,6 +1,7 @@
-import { Routes, Route, Link } from "react-router-dom"; 
-import Home from "./pages/Home";
-import Search from "./pages/Search";
+import { Routes, Route, Link } from "react-router-dom";
+import Home from "./Pages/Home";
+import Search from "./Pages/Search";
+
 
 function App() {
   return (

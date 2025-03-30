@@ -3,7 +3,7 @@ const _ = require("lodash");
 const router = express.Router();
 const json = require("./files/user-behavior-data.json");
 
-router.get("/data/search", (req, res, next) => {
+router.get("/data/search", (req, res) => {
   /*
     Valid Query String Parameters
     - operatingSystem
@@ -12,10 +12,9 @@ router.get("/data/search", (req, res, next) => {
     - behaviorClass
   */
 
-  const filterType = req.query.filterType || null;
-  const keyword = req.query.keyword || null;
+  const { filterType, keyword } = req.query;
+  let searchType = "unfiltered";
 
-  let searchType;
   if (filterType) {
     const lower_case = filterType.toLowerCase();
     searchType =
@@ -30,27 +29,23 @@ router.get("/data/search", (req, res, next) => {
         : "unfiltered";
   }
 
-  if (
-    searchType === "unfiltered" ||
-    (searchType !== "unfiltered" && !keyword)
-  ) {
-    return res.send(json);
+  if (searchType === "unfiltered" || !keyword) {
+    return res.send(json); // Return all records if no filter or keyword provided
   } else {
     const filteredData = _.filter(json, (record) => {
       let include = false;
-      let lower_keyword = keyword.toLowerCase();
+      const lower_keyword = keyword.toLowerCase();
       switch (searchType) {
         case "m":
           include =
-            record["Device Model"].toLowerCase().indexOf(lower_keyword) >= 0;
+            record["Device Model"].toLowerCase().includes(lower_keyword);
           break;
         case "g":
           include = record["Gender"].toLowerCase() === lower_keyword;
           break;
         case "op":
           include =
-            record["Operating System"].toLowerCase().indexOf(lower_keyword) >=
-            0;
+            record["Operating System"].toLowerCase().includes(lower_keyword);
           break;
         case "bc":
           include = record["User Behavior Class"] === lower_keyword;
@@ -61,6 +56,7 @@ router.get("/data/search", (req, res, next) => {
 
       return include;
     });
+
     return res.send(filteredData);
   }
 });

@@ -96,7 +96,9 @@ function Search() {
       
       {!loading && data.length > 0 && (
         <>
-          <h3>Displaying {data.length} records</h3>
+          {/* Display the number of records found */}
+          <h3>Displaying {data.length} records for {filterType || "All Categories"}</h3>
+          
           <div className="row mt-3">
             {metrics && (
               <>
@@ -131,6 +133,8 @@ function Search() {
               </>
             )}
           </div>
+
+          {/* Display the Search Results Table */}
           <table className="table mt-3">
             <thead>
               <tr>
