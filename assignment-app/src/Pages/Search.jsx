@@ -7,41 +7,62 @@ function Search() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
+  const [totalRecords, setTotalRecords] = useState(700); // You can modify this based on your API or set it dynamically
 
   const fetchData = async () => {
-    if (!filterType || !keyword) {
-      setError('Please provide both filter type and keyword');
-      return;
-    }
+    // If no filter type or keyword, it should fetch all records
+    if (!filterType && !keyword) {
+      // You can modify this if you have an endpoint for fetching all data
+      setLoading(true);
+      setError(null);
 
-    setLoading(true);
-    setError(null);
+      try {
+        const response = await fetch(`http://localhost:3000/api/data/search`); // Assuming a generic API for all records
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.error || 'Error fetching data');
+        }
 
-    try {
-      const response = await fetch(
-        `http://localhost:3000/api/data/search?filterType=${filterType}&keyword=${keyword}`
-      );
-
-      if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || 'Error fetching data');
+        setData(result);
+        calculateMetrics(result);
+        setTotalRecords(result.length); // Update the total record count here
+      } catch (err) {
+        setError(`Error fetching data: ${err.message}`);
+      } finally {
+        setLoading(false);
       }
+    } else {
+      setLoading(true);
+      setError(null);
 
-      const result = await response.json();
-      setData(result);
-      calculateMetrics(result);
-    } catch (err) {
-      setError(`Error fetching data: ${err.message}`);
-    } finally {
-      setLoading(false);
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/data/search?filterType=${filterType}&keyword=${keyword}`
+        );
+
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.error || 'Error fetching data');
+        }
+
+        const result = await response.json();
+        setData(result);
+        calculateMetrics(result);
+        setTotalRecords(result.length); // Update the total record count based on filtered data
+      } catch (err) {
+        setError(`Error fetching data: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const calculateMetrics = (records) => {
     if (!records.length) return;
-    
+
     const toNumberArray = (arr, key) => arr.map(r => Number(r[key]) || 0);
-    
+
     const avg = (arr) => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2) : 0;
     const median = (arr) => {
       if (!arr.length) return 0;
@@ -49,7 +70,7 @@ function Search() {
       const mid = Math.floor(sorted.length / 2);
       return sorted.length % 2 !== 0 ? sorted[mid] : ((sorted[mid - 1] + sorted[mid]) / 2).toFixed(2);
     };
-    
+
     setMetrics({
       appUsage: {
         avg: avg(toNumberArray(records, "App Usage Time (min/day)")),
@@ -90,14 +111,14 @@ function Search() {
           <button className="btn btn-primary" onClick={fetchData}>Search</button>
         </div>
       </div>
-      
+
       {loading && <p>Loading...</p>}
       {error && <p className="text-danger">{error}</p>}
-      
+
       {!loading && data.length > 0 && (
         <>
           {/* Display the number of records found */}
-          <h3>Displaying {data.length} records for {filterType || "All Categories"}</h3>
+          <h3>Displaying {data.length} records {filterType ? `for ${filterType}` : ''}{keyword ? ` matching "${keyword}"` : ''}</h3>
           
           <div className="row mt-3">
             {metrics && (
